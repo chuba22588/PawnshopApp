@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pawn Shop - Staff</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 20px; background-color: #f1f5f9; color: #334155; }
+        .container { max-width: 900px; margin: auto; }
+        h2 { color: #0f172a; font-weight: 700; }
+        .box { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 25px; }
+
+        input, select, button { font-family: 'Roboto', sans-serif; width: 100%; padding: 12px; margin: 5px 0 15px 0; border-radius: 4px; border: 1px solid #cbd5e1; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus, select:focus { border-color: #1e3a8a; }
+
+        button { background-color: #1e293b; color: white; cursor: pointer; font-weight: 500; border: none; letter-spacing: 0.5px; }
+        button:hover { background-color: #0f172a; }
+        .btn-primary { background-color: #1e3a8a; }
+        .btn-primary:hover { background-color: #172554; }
+
+        .table-container { overflow-x: auto; border-radius: 4px; border: 1px solid #cbd5e1; }
+        table { width: 100%; border-collapse: collapse; background: white; text-align: left; }
+        th, td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #cbd5e1; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f1f5f9; }
+        td { color: #1e293b; font-size: 14px; }
+
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid transparent; }
+        .status-disponibil { background-color: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+        .status-vandut { background-color: #f1f5f9; color: #94a3b8; }
+        .status-rezervat { background-color: #fff1f2; color: #9f1239; border-color: #fecdd3; }
+        .status-amanetat { background-color: #fefce8; color: #854d0e; border-color: #fef08a; }
+
+        .alert-box { background-color: #fff1f2; color: #9f1239; padding: 20px; border-radius: 8px; display: none; margin-bottom: 25px; border: 1px solid #fecdd3; border-left: 4px solid #e11d48; }
+        .alert-box ul { margin: 0; padding-left: 20px; }
+
+        #login-screen { position: fixed; top:0; left:0; width:100%; height:100%; background:#e2e8f0; display:flex; justify-content:center; align-items:center; z-index: 1000; }
+        #login-box { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #cbd5e1; text-align: center; width: 320px;}
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div id="login-box">
+        <h2 style="margin-top: 0; color: #1e293b;">Staff Login</h2>
+        <input type="password" id="parola" placeholder="Password (admin123)">
+        <button class="btn-primary" onclick="verificaParola()">Secure Login</button>
+    </div>
+</div>
+
+<div class="container" id="dashboard" style="display:none;">
+    <h2>Staff Dashboard</h2>
+
+    <div class="alert-box" id="alerts-container">
+        <h3 style="margin-top:0; font-size: 15px;">⚠️ Action Required: Expiry Alerts</h3>
+        <ul id="lista-alerte" style="font-size: 14px;"></ul>
+    </div>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div class="box" style="flex: 1; min-width: 300px;">
+            <h3 style="font-size: 16px; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Add Inventory Item</h3>
+            <input type="text" id="nume-obiect" placeholder="Item Name (e.g., Rolex)">
+            <input type="text" id="cat-obiect" placeholder="Category (e.g., Ceasuri)">
+            <input type="number" id="pret-obiect" placeholder="Price (RON)">
+            <label style="font-size: 12px; color: #64748b; font-weight: 700; display: block; margin-bottom: 5px;">DUE DATE</label>
+            <input type="date" id="data-obiect">
+            <button onclick="adaugaObiect()">Save to Database</button>
+        </div>
+
+        <div class="box" style="flex: 1; min-width: 300px;">
+            <h3 style="font-size: 16px; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Process Transaction</h3>
+            <input type="number" id="tranz-obiect-id" placeholder="Item ID">
+            <input type="text" id="tranz-user-nume" placeholder="Customer Name (e.g., John Doe)">
+            <select id="tranz-tip">
+                <option value="vanzare">Vanzare (Sell)</option>
+                <option value="amanet">Amanet (Pawn)</option>
+            </select>
+            <input type="number" id="tranz-suma" placeholder="Final Amount (RON)">
+            <button class="btn-primary" onclick="proceseazaTranzactie()">Process Transaction</button>
+        </div>
+    </div>
+
+    <div class="box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 16px;">System Inventory</h3>
+            <button onclick="incarcaDate()" style="background-color: #cbd5e1; color: #0f172a; width: auto; margin: 0; padding: 6px 12px; font-size: 13px;">Sync Data</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price (RON)</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-corp"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // PUT YOUR NGROK LINK HERE
+    const API_BASE = "https://lavonna-unskinned-unspontaneously.ngrok-free.dev";
+    const reqHeaders = { "ngrok-skip-browser-warning": "true" };
+
+    function verificaParola() {
+        if(document.getElementById('parola').value === 'admin123') {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            incarcaDate();
+        } else {
+            alert('Authentication Failed: Incorrect Password');
+        }
+    }
+
+    document.getElementById('parola').addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') verificaParola();
+    });
+
+    function adaugaObiect() {
+        let n = document.getElementById("nume-obiect").value;
+        let c = document.getElementById("cat-obiect").value;
+        let p = document.getElementById("pret-obiect").value;
+        let d = document.getElementById("data-obiect").value;
+
+        if(!n || !p) { alert("Validation Error: Name and Price required."); return; }
+
+        fetch(`${API_BASE}/adauga_obiect?nume=${n}&categorie=${c}&pret=${p}&data_scadenta=${d}`, { method: 'POST', headers: reqHeaders })
+        .then(res => res.json())
+        .then(data => { alert("Success: Item Added to Database."); incarcaDate(); });
+    }
+
+    function proceseazaTranzactie() {
+        let oid = document.getElementById("tranz-obiect-id").value;
+        let unume = document.getElementById("tranz-user-nume").value;
+        let tip = document.getElementById("tranz-tip").value;
+        let suma = document.getElementById("tranz-suma").value;
+
+        // Hardcoded user_id=1 for now, but legally captures the customer's name!
+        fetch(`${API_BASE}/adauga_tranzactie?obiect_id=${oid}&user_id=1&nume_client=${unume}&tip_tranzactie=${tip}&suma=${suma}`, { method: 'POST', headers: reqHeaders })
+        .then(res => res.json())
+        .then(data => { alert(data.mesaj || data.eroare); incarcaDate(); });
+    }
+
+    function incarcaDate() {
+        fetch(`${API_BASE}/obiecte`, { headers: reqHeaders })
+            .then(res => res.json())
+            .then(data => {
+                let html = "";
+                data.forEach(o => {
+                    let statusClass = "status-" + o.status.toLowerCase().trim();
+                    html += `<tr>
+                        <td style="color: #64748b; font-weight: 500;">${o.id}</td>
+                        <td style="font-weight: 500;">${o.nume}</td>
+                        <td style="color: #475569;">${o.categorie}</td>
+                        <td style="font-weight: 500;">${parseFloat(o.pret).toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${o.status}</span></td>
+                        <td style="color: #64748b;">${o.data_scadenta || '-'}</td>
+                    </tr>`;
+                });
+                document.getElementById("tabel-corp").innerHTML = html;
+            });
+
+        fetch(`${API_BASE}/alerte`, { headers: reqHeaders })
+            .then(res => res.json())
+            .then(data => {
+                let container = document.getElementById("alerts-container");
+                let lista = document.getElementById("lista-alerte");
+                if(data.length > 0) {
+                    container.style.display = "block";
+                    lista.innerHTML = data.map(o => `<li>Item <strong>#${o.id} (${o.nume})</strong> is due on <strong>${o.data_scadenta}</strong></li>`).join('');
+                } else {
+                    container.style.display = "none";
+                }
+            });
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pawn Shop - Client</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; margin-top: 20px; }
+        h2 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e2e8f0; }
+
+        input, select, button { font-family: 'Poppins', sans-serif; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; transition: 0.2s; }
+        input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+        .btn-primary { background-color: #3b82f6; color: white; border: none; cursor: pointer; font-weight: 600; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-secondary { background-color: #64748b; color: white; border: none; cursor: pointer; font-size: 14px; padding: 8px 16px; border-radius: 6px; }
+
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+        .item-row:last-child { border-bottom: none; }
+        .item-title { font-weight: 600; font-size: 16px; color: #0f172a; margin-bottom: 4px; }
+        .item-price { color: #64748b; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 style="text-align: center; color: #0f172a;">Inventory & Exchange</h1>
+
+    <div class="card">
+        <span style="font-size: 12px; font-weight: 700; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">Currency Converter</span>
+        <div style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+            <input type="number" id="suma-schimb" placeholder="Amount" style="flex: 1; min-width: 100px;">
+            <select id="valuta-schimb" style="flex: 1; min-width: 100px;">
+                <option value="EUR">EUR (Euro)</option>
+                <option value="USD">USD (US Dollar)</option>
+                <option value="GBP">GBP (British Pound)</option>
+                <option value="RSD">RSD (Serbian Dinar)</option>
+
+                <option value="CHF">CHF (Swiss Franc)</option>
+                <option value="MDL">MDL (Moldovan Leu)</option>
+                <option value="CAD">CAD (Canadian Dollar)</option>
+                <option value="AUD">AUD (Australian Dollar)</option>
+                <option value="JPY">JPY (Japanese Yen)</option>
+            </select>
+            <select id="directie-schimb" style="flex: 1; min-width: 120px;">
+                <option value="to_ron">Into RON</option>
+                <option value="from_ron">From RON</option>
+            </select>
+            <button class="btn-primary" onclick="calculeazaSchimb()" style="width: auto;">Calculate</button>
+        </div>
+        <h2 id="rezultat-schimb" style="margin: 0; border: none; padding: 0;"></h2>
+    </div>
+
+    <h2>Available Items <button class="btn-secondary" onclick="incarcaObiecte()">Refresh</button></h2>
+    <div class="card" id="lista-obiecte" style="padding: 10px 25px;">
+        <p style="color: #64748b; text-align: center;">Loading inventory...</p>
+    </div>
+</div>
+
+<script>
+    // PUT YOUR NGROK LINK HERE
+    const API_BASE = "https://lavonna-unskinned-unspontaneously.ngrok-free.dev";
+    const reqHeaders = { "ngrok-skip-browser-warning": "true" };
+
+    function calculeazaSchimb() {
+        let suma = document.getElementById("suma-schimb").value;
+        let valuta = document.getElementById("valuta-schimb").value;
+        let directie = document.getElementById("directie-schimb").value;
+
+        if(!suma) return;
+
+        fetch(`${API_BASE}/schimb_valutar?suma=${suma}&valuta=${valuta}&directie=${directie}`, { headers: reqHeaders })
+            .then(res => res.json())
+            .then(data => {
+                if(data.eroare) {
+                    document.getElementById("rezultat-schimb").innerText = data.eroare;
+                } else {
+                    document.getElementById("rezultat-schimb").innerText = data.mesaj_rezultat;
+                }
+            })
+            .catch(err => document.getElementById("rezultat-schimb").innerText = "Connection error");
+    }
+
+    function incarcaObiecte() {
+        fetch(`${API_BASE}/obiecte`, { headers: reqHeaders })
+            .then(res => res.json())
+            .then(data => {
+                let html = "";
+                data.forEach(obj => {
+                    let status_curent = obj.status.toLowerCase().trim();
+
+                    if(status_curent !== 'vandut') {
+                        let btnOrBadge = status_curent === 'disponibil'
+                            ? `<button onclick="rezervaObiect(${obj.id}, this)" style="margin:0; padding: 8px 16px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Reserve</button>`
+                            : `<button disabled style="margin:0; padding: 8px 16px; background-color: #ef4444; color: white; border: none; border-radius: 6px; cursor: not-allowed; font-weight: 600;">Reserved</button>`;
+
+                        html += `
+                        <div class="item-row">
+                            <div>
+                                <div class="item-title">${obj.nume}</div>
+                                <div class="item-price">${obj.pret} RON</div>
+                            </div>
+                            <div>${btnOrBadge}</div>
+                        </div>`;
+                    }
+                });
+                document.getElementById("lista-obiecte").innerHTML = html || "<p style='color: #64748b; text-align: center; margin: 15px 0;'>No items available right now.</p>";
+            })
+            .catch(err => document.getElementById("lista-obiecte").innerHTML = "<p style='color: #ef4444; text-align: center;'>Connection error.</p>");
+    }
+
+    function rezervaObiect(id, btnElement) {
+        // Instant Red Visual Feedback
+        btnElement.innerText = "Reserved";
+        btnElement.style.backgroundColor = "#ef4444";
+        btnElement.disabled = true;
+        btnElement.style.cursor = "not-allowed";
+
+        // Silent Background Update
+        fetch(`${API_BASE}/rezervare/${id}?user_id=1`, { method: 'POST', headers: reqHeaders })
+        .then(res => res.json())
+        .then(data => {
+            if (data.eroare) alert("Database Error: " + data.eroare);
+        })
+        .catch(err => console.log("Connection Failed!"));
+    }
+
+    // Load items when page opens
+    window.onload = incarcaObiecte;
+</script>
+
+</body>
+</html>
